@@ -1,4 +1,27 @@
+let currentVersion = "1.1";
 let isActive = true;
+
+function checkForUpdates() {
+    console.log('Checking for updates...');
+    fetch("https://raw.githubusercontent.com/kitaviq/url_cleaner/main/version.json")
+        .then(response => response.json())
+        .then(data => {
+            console.log('Fetched version:', data.version);
+            if (data.version !== currentVersion) {
+                alert("New version available! Please update your extension.");
+                chrome.tabs.create({ url: data.downloadUrl });
+            }
+        })
+        .catch(error => console.error('Error fetching version:', error));
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+    checkForUpdates();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+    checkForUpdates();
+});
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.getStatus) {
