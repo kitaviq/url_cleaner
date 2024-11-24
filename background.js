@@ -1,4 +1,4 @@
-let currentVersion = "1.1";
+let currentVersion = "1.1.1";
 let isActive = true;
 
 function checkForUpdates() {
@@ -37,6 +37,12 @@ chrome.webRequest.onBeforeRequest.addListener(
         if (!isActive) {
             return {};
         }
+
+        // Исключить важные запросы для показа номера
+        if (details.url.includes("/clickstream/events") || details.url.includes("/stat/radar") || details.url.includes("/web/1/items/phone")) {
+            return {};
+        }
+
         var cleanUrl = details.url.split('?')[0];
         if (cleanUrl !== details.url) {
             return {redirectUrl: cleanUrl};
