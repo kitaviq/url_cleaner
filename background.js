@@ -1,4 +1,4 @@
-let currentVersion = "1.1.1";
+let currentVersion = "1.1.2";
 let isActive = true;
 
 function checkForUpdates() {
@@ -32,26 +32,64 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
-chrome.webRequest.onBeforeRequest.addListener(
-    function(details) {
-        if (!isActive) {
-            return {};
+// Добавление правил для declarativeNetRequest
+chrome.declarativeNetRequest.updateDynamicRules({
+    addRules: [{
+        "id": 1,
+        "priority": 1,
+        "action": {
+            "type": "redirect",
+            "redirect": {
+                "regexSubstitution": "\\0"
+            }
+        },
+        "condition": {
+            "urlFilter": "|https://www.avito.ru/.*",
+            "resourceTypes": ["main_frame", "sub_frame"]
         }
+    }, {
+        "id": 2,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "|https://www.avito.ru/clickstream/events",
+            "resourceTypes": ["xmlhttprequest", "script"]
+        }
+    }, {
+        "id": 3,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "|https://www.avito.ru/stat/radar",
+            "resourceTypes": ["xmlhttprequest", "script"]
+        }
+    }, {
+        "id": 4,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "|https://www.avito.ru/web/1/items/phone",
+            "resourceTypes": ["xmlhttprequest", "script"]
+        }
+    }],
+    removeRuleIds: [1, 2, 3, 4]
+});
 
-        // Исключить важные запросы для показа номера
-        if (details.url.includes("/clickstream/events") || details.url.includes("/stat/radar") || details.url.includes("/web/1/items/phone")) {
-            return {};
+// Удаление блока mortgage broker
+chrome.webNavigation.onCompleted.addListener(function(details) {
+    chrome.scripting.executeScript({
+        target: { tabId: details.tabId },
+        func: () => {
+            const element = document.querySelector(".style-mortgage-broker-wrapper-blk8j.js-mortgage-broker");
+            if (element) {
+                element.remove();
+            }
         }
-
-        var cleanUrl = details.url.split('?')[0];
-        if (cleanUrl !== details.url) {
-            return {redirectUrl: cleanUrl};
-        }
-    },
-    {urls: [
-        "*://www.avito.ru/*",
-        "*://*.domclick.ru/*",
-        "*://*.cian.ru/*"
-    ]},
-    ["blocking"]
-);
+    });
+}, {url: [{urlMatches: '.*://www.avito.ru/.*'}]});
